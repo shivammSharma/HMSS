@@ -3,11 +3,14 @@ const mongoose = require('mongoose');
 let isConnected = false;
 
 const connectDB = async () => {
+  if (isConnected && mongoose.connection && mongoose.connection.readyState === 1) {
+    return true;
+  }
   const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/hms_db';
   try {
     mongoose.set('strictQuery', false);
     const conn = await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 3000
+      serverSelectionTimeoutMS: 5000
     });
     isConnected = true;
     console.log(`[MongoDB Connected] Host: ${conn.connection.host}`);
@@ -19,6 +22,7 @@ const connectDB = async () => {
   }
 };
 
-const getIsConnected = () => isConnected;
+const getIsConnected = () => isConnected && mongoose.connection && mongoose.connection.readyState === 1;
 
 module.exports = { connectDB, getIsConnected };
+

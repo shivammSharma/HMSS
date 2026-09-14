@@ -16,6 +16,17 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Auto-connect DB middleware for Vercel / serverless environment
+app.use(async (req, res, next) => {
+  if (!getIsConnected()) {
+    const connected = await connectDB();
+    if (connected) {
+      await seedMongoDB(models);
+    }
+  }
+  next();
+});
+
 // API Routes
 app.use('/api', apiRoutes);
 
@@ -38,18 +49,22 @@ if (fs.existsSync(frontendDist)) {
   });
 }
 
-// Start Server
-const startServer = async () => {
-  const connected = await connectDB();
-  if (connected) {
-    await seedMongoDB(models);
-  }
-  app.listen(PORT, () => {
-    console.log(`=======================================================`);
-    console.log(`  MERN HMS Server running on port ${PORT} [${process.env.NODE_ENV || 'production'}]`);
-    console.log(`  Health check: http://localhost:${PORT}/api/health`);
-    console.log(`=======================================================`);
-  });
-};
+// Start Server locally
+if (require.main === module || !process.env.VERCEL) {
+  const startServer = async () => {
+    const connected = await connectDB();
+    if (connected) {
+      await seedMongoDB(models);
+    }
+    app.listen(PORT, () => {
+      console.log(`=======================================================`);
+      console.log(`  MERN HMS Server running on port ${PORT} [${process.env.NODE_ENV || 'production'}]`);
+      console.log(`  Health check: http://localhost:${PORT}/api/health`);
+      console.log(`=======================================================`);
+    });
+  };
+  startServer();
+}
 
-startServer();
+module.exports = app;
+

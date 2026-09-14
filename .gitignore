@@ -1,3 +1,6 @@
+node_modules
 .env
-
-exmpale.txt 
+.env.local
+dist
+.vercel
+*.log
