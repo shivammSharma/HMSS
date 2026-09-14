@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
 });
+
 
 // Interceptor to attach Authorization Bearer header
 API.interceptors.request.use((config) => {
