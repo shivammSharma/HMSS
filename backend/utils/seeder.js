@@ -173,37 +173,42 @@ const memoryStore = new Store();
 
 const seedMongoDB = async (models) => {
   try {
-    const userCount = await models.User.countDocuments();
-    if (userCount === 0) {
-      console.log('[Seeder] Populating database with all 16 MERN HMS hospital domain records...');
-      const hashedUsers = await Promise.all(initialUsers.map(async (u) => {
-        const password = await bcrypt.hash(u.plainPassword || 'admin123', 10);
-        return { ...u, password };
-      }));
-
-      await models.User.insertMany(hashedUsers);
-      await models.Doctor.insertMany(initialDoctors);
-      await models.Patient.insertMany(initialPatients);
-      await models.OpdDepartment.insertMany(initialOpd);
-      await models.IpdDepartment.insertMany(initialIpd);
-      await models.Appointment.insertMany(initialAppointments);
-      await models.Bed.insertMany(initialBeds);
-      await models.Prescription.insertMany(initialPrescriptions);
-      await models.Medicine.insertMany(initialMedicines);
-      await models.PathologyTest.insertMany(initialPathology);
-      await models.RadiologyTest.insertMany(initialRadiology);
-      await models.BloodBank.insertMany(initialBloodBank);
-      await models.BloodDonor.insertMany(initialBloodDonors);
-      await models.Ambulance.insertMany(initialAmbulances);
-      await models.BirthReport.insertMany(initialBirthReports);
-      await models.DeathReport.insertMany(initialDeathReports);
-      await models.EmployeePayroll.insertMany(initialPayroll);
-      await models.Invoice.insertMany(initialInvoices);
-      await models.ReceptionCall.insertMany(initialReceptionCalls);
-      await models.NoticeBoard.insertMany(initialNotices);
-
-      console.log('[Seeder] Database successfully populated across all 16 hospital domains!');
+    // 1. Ensure all initial demo users exist in DB
+    for (const u of initialUsers) {
+      const existingUser = await models.User.findOne({ email: u.email.toLowerCase() });
+      if (!existingUser) {
+        const hashedPassword = await bcrypt.hash(u.plainPassword || 'admin123', 10);
+        await models.User.create({
+          ...u,
+          email: u.email.toLowerCase(),
+          password: hashedPassword
+        });
+        console.log(`[Seeder] Seeded missing demo user: ${u.email}`);
+      }
     }
+
+    // 2. Ensure domain collections are populated if empty
+    if ((await models.Doctor.countDocuments()) === 0) await models.Doctor.insertMany(initialDoctors);
+    if ((await models.Patient.countDocuments()) === 0) await models.Patient.insertMany(initialPatients);
+    if ((await models.OpdDepartment.countDocuments()) === 0) await models.OpdDepartment.insertMany(initialOpd);
+    if ((await models.IpdDepartment.countDocuments()) === 0) await models.IpdDepartment.insertMany(initialIpd);
+    if ((await models.Appointment.countDocuments()) === 0) await models.Appointment.insertMany(initialAppointments);
+    if ((await models.Bed.countDocuments()) === 0) await models.Bed.insertMany(initialBeds);
+    if ((await models.Prescription.countDocuments()) === 0) await models.Prescription.insertMany(initialPrescriptions);
+    if ((await models.Medicine.countDocuments()) === 0) await models.Medicine.insertMany(initialMedicines);
+    if ((await models.PathologyTest.countDocuments()) === 0) await models.PathologyTest.insertMany(initialPathology);
+    if ((await models.RadiologyTest.countDocuments()) === 0) await models.RadiologyTest.insertMany(initialRadiology);
+    if ((await models.BloodBank.countDocuments()) === 0) await models.BloodBank.insertMany(initialBloodBank);
+    if ((await models.BloodDonor.countDocuments()) === 0) await models.BloodDonor.insertMany(initialBloodDonors);
+    if ((await models.Ambulance.countDocuments()) === 0) await models.Ambulance.insertMany(initialAmbulances);
+    if ((await models.BirthReport.countDocuments()) === 0) await models.BirthReport.insertMany(initialBirthReports);
+    if ((await models.DeathReport.countDocuments()) === 0) await models.DeathReport.insertMany(initialDeathReports);
+    if ((await models.EmployeePayroll.countDocuments()) === 0) await models.EmployeePayroll.insertMany(initialPayroll);
+    if ((await models.Invoice.countDocuments()) === 0) await models.Invoice.insertMany(initialInvoices);
+    if ((await models.ReceptionCall.countDocuments()) === 0) await models.ReceptionCall.insertMany(initialReceptionCalls);
+    if ((await models.NoticeBoard.countDocuments()) === 0) await models.NoticeBoard.insertMany(initialNotices);
+
+    console.log('[Seeder] Database verification & seeding complete.');
   } catch (err) {
     console.error('[Seeder Note]', err.message);
   }

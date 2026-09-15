@@ -24,14 +24,16 @@ const login = async (req, res) => {
     }
 
     let isMatch = false;
-    if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
-      isMatch = await bcrypt.compare(password, user.password);
-    } else {
-      isMatch = (user.password === password);
+    if (user.password) {
+      if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
+        isMatch = await bcrypt.compare(password, user.password);
+      } else {
+        isMatch = (user.password === password);
+      }
     }
 
     // Bypass check for default demo accounts if plain match
-    if (!isMatch && (password === 'admin123' || password === user.plainPassword)) {
+    if (!isMatch && (password === 'admin123' || (user.plainPassword && password === user.plainPassword))) {
       isMatch = true;
     }
 
@@ -41,11 +43,11 @@ const login = async (req, res) => {
 
     const payload = {
       id: user._id,
-      name: user.name,
+      name: user.name || user.fullName || 'HMS User',
       email: user.email,
-      role: user.role,
-      avatar: user.avatar,
-      phone: user.phone
+      role: user.role || 'patient',
+      avatar: user.avatar || user.profileImage || '',
+      phone: user.phone || user.phoneNumber || ''
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
@@ -68,8 +70,7 @@ const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUserObj = {
-      _id: 'u_' + Date.now(),
+    const userDataToSave = {
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
@@ -80,28 +81,30 @@ const register = async (req, res) => {
       status: 'active'
     };
 
+    let userId;
     if (getIsConnected()) {
       const existing = await User.findOne({ email: email.toLowerCase() });
       if (existing) {
         return res.status(400).json({ message: 'User already exists with this email.' });
       }
-      const created = await User.create(newUserObj);
-      newUserObj._id = created._id;
+      const created = await User.create(userDataToSave);
+      userId = created._id;
     } else {
       const existing = memoryStore.users.find(u => u.email.toLowerCase() === email.toLowerCase());
       if (existing) {
         return res.status(400).json({ message: 'User already exists with this email.' });
       }
-      memoryStore.users.push(newUserObj);
+      userId = 'u_' + Date.now();
+      memoryStore.users.push({ _id: userId, ...userDataToSave });
     }
 
     const payload = {
-      id: newUserObj._id,
-      name: newUserObj.name,
-      email: newUserObj.email,
-      role: newUserObj.role,
-      avatar: newUserObj.avatar,
-      phone: newUserObj.phone
+      id: userId,
+      name: userDataToSave.name,
+      email: userDataToSave.email,
+      role: userDataToSave.role,
+      avatar: userDataToSave.avatar,
+      phone: userDataToSave.phone
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
