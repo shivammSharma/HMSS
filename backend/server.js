@@ -27,10 +27,11 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// API Routes
+// API Routes (mounted at both /api and / to guarantee Vercel serverless compatibility)
 app.use('/api', apiRoutes);
+app.use('/', apiRoutes);
 
-app.get('/api/health', (req, res) => {
+const healthCheckHandler = (req, res) => {
   res.json({
     status: 'OK',
     app: 'MERN Hospital Management System API',
@@ -38,7 +39,10 @@ app.get('/api/health', (req, res) => {
     environment: process.env.NODE_ENV || 'production',
     timestamp: new Date()
   });
-});
+};
+
+app.get('/api/health', healthCheckHandler);
+app.get('/health', healthCheckHandler);
 
 // Serve static frontend build in production
 const frontendDist = path.join(__dirname, '../frontend/dist');
