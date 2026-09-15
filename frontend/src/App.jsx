@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
+import { wakeUpServer } from './services/api';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DoctorsPage from './pages/DoctorsPage';
@@ -49,6 +50,9 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  // Ping backend immediately so Render wakes up before user logs in
+  useEffect(() => { wakeUpServer(); }, []);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

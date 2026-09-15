@@ -1,18 +1,12 @@
 import axios from 'axios';
 
-const getBaseURL = () => {
-  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
-  if (envUrl && !envUrl.includes('onrender.com')) {
-    return envUrl;
-  }
-  return '/api';
-};
+// Render backend - confirmed working with MongoDB Atlas connected
+const RENDER_URL = 'https://hmss-brxp.onrender.com/api';
 
 const API = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: RENDER_URL,
+  timeout: 30000,  // 30s to handle Render cold starts
 });
-
-
 
 // Interceptor to attach Authorization Bearer header
 API.interceptors.request.use((config) => {
@@ -25,4 +19,10 @@ API.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
+// Wake up Render on first load (prevents cold-start delays)
+export const wakeUpServer = () => {
+  axios.get(`${RENDER_URL}/health`, { timeout: 30000 }).catch(() => {});
+};
+
 export default API;
+

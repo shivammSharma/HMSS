@@ -35,7 +35,13 @@ export default function Login() {
     const serverMsg = e.response?.data?.message;
     const isHtml = typeof e.response?.data === 'string' && e.response.data.includes('<!DOCTYPE');
     if (isHtml) {
-      return 'Server routing issue: API returned HTML instead of JSON. Please check backend hosting settings.';
+      return 'Server routing issue: API returned HTML. Check backend settings.';
+    }
+    if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
+      return '⏳ Server is waking up (free tier cold start). Please wait 30 seconds and try again.';
+    }
+    if (e.message === 'Network Error' || !e.response) {
+      return '🔴 Cannot reach server. It may be starting up — wait 30 seconds and try again.';
     }
     return serverMsg || e.message || 'Authentication error. Please check your credentials.';
   };
