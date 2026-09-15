@@ -185,7 +185,6 @@ export default function Login() {
                   <select className="input" value={regRole} onChange={e => setRegRole(e.target.value)}>
                     <option value="patient">Patient</option>
                     <option value="doctor">Doctor</option>
-                    <option value="admin">Admin</option>
                     <option value="pharmacist">Pharmacist</option>
                     <option value="receptionist">Receptionist</option>
                     <option value="nurse">Nurse</option>
